@@ -354,6 +354,13 @@ class Qwen3ASRThinkerConfig(PretrainedConfig):
         self.text_config = text_config
         self.audio_token_id = audio_token_id
 
+        # PretrainedConfig propagates ``attn_implementation`` only to
+        # sub-configs that already exist. Re-apply it after constructing the
+        # nested configs so an explicit top-level value reaches both the
+        # audio and text configs.
+        if "attn_implementation" in kwargs:
+            self._attn_implementation = kwargs["attn_implementation"]
+
 
 class Qwen3ASRConfig(PretrainedConfig):
     """
@@ -406,6 +413,11 @@ class Qwen3ASRConfig(PretrainedConfig):
 
         self.thinker_config = Qwen3ASRThinkerConfig(**thinker_config)
         self.support_languages = support_languages
+
+        # The thinker config is created after PretrainedConfig.__init__(), so
+        # the parent's initial recursive propagation cannot reach it.
+        if "attn_implementation" in kwargs:
+            self._attn_implementation = kwargs["attn_implementation"]
 
     def get_text_config(self, decoder=False) -> "PretrainedConfig":
         """
